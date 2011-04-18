@@ -254,7 +254,7 @@ module convect_emanuel
                            IF(I.EQ.1)JN=MAX(JN,2)
                            IF(JN.EQ.0) cycle do_thrity
 
-                           do_twelve: do while(lcomp)
+                           do_twelve: do while(lcomp .eqv. .true.)
 
                                AHM=0.0; RM=0.0; UM=0.0; VM=0.0
 
@@ -304,7 +304,7 @@ module convect_emanuel
                                   A2=A2+(CPD*(1.-Q(J))+Q(J)*CPV)*X*(PH(J)-PH(J+1))
                                enddo do_twenty
    
-                               do_twenty_five: DO 25 J=I,JN
+                               do_twenty_five: DO J=I,JN
                                   TH(J)=AHM/A2
                                   T(J)=T(J)*TH(J)
                                   TC=TOLD(J)-273.15
