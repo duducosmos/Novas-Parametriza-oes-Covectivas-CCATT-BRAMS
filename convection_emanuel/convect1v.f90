@@ -53,9 +53,16 @@ module convect_emanuel
                                OMTRAIN=50.0,OMTSNOW=5.5,COEFFR=1.0,COEFFS=0.8,CU=0.7,   &
                                BETA=10.0,DTMAX=0.9,ALPHA=0.2,DAMP=0.1
 
-!
+!   ***        ASSIGN VALUES OF THERMODYNAMIC CONSTANTS,        ***
+!   ***            GRAVITY, AND LIQUID WATER DENSITY.           ***
+!   ***             THESE SHOULD BE CONSISTENT WITH             ***
+!   ***              THOSE USED IN CALLING PROGRAM              ***
+!   ***     NOTE: THESE ARE ALSO SPECIFIED IN SUBROUTINE TLIFT  ***
+
     real(kind=8), parameter :: CPD=1005.7,CPV=1870.0,CL=2500.0,RV=461.5,RD=287.04,LV0=2.501E6,&
-                               G=9.8,ROWL=1000.0,
+                               G=9.8,ROWL=1000.0 
+    real(kind=8), parameter :: CPVMCL=CL-CPV, EPS=RD/RV, EPSI=1.0/EPS, GINV=1.0/G, DELTI=1.0/DELT
+
     contains
 
 !-----------------------------------------------------------------------------
@@ -174,7 +181,7 @@ module convect_emanuel
                               ND,  NL,   NTRA,   DELT, IFLAG,  FT,     FQ,   FU,&
                               FV,  FTRA, PRECIP, WD,   TPRIME, QPRIME, CBMF)
 
-            real(kind=8) :: CPVMCL,EPS,EPSI,GINV,DELTI
+            
 
             
             
@@ -195,23 +202,16 @@ module convect_emanuel
             real(kind=8), dimension(NA,NA) :: UENT,VENT,MENT,QENT,ELIJ,SIJ
             real(kind=8), dimension(NA,NTRA) :: TRAP
             real(kind=8), dimension(NA,NA,NTRA) :: TRAENT
-            real(kind=8) :: LV0,DELT,PRECIP,WD,TPRIME,QPRIME
+            real(kind=8) ::DELT,PRECIP,WD,TPRIME,QPRIME
 
-            !   ***        ASSIGN VALUES OF THERMODYNAMIC CONSTANTS,        ***
-            !   ***            GRAVITY, AND LIQUID WATER DENSITY.           ***
-            !   ***             THESE SHOULD BE CONSISTENT WITH             ***
-            !   ***              THOSE USED IN CALLING PROGRAM              ***
-            !   ***     NOTE: THESE ARE ALSO SPECIFIED IN SUBROUTINE TLIFT  ***
-      
-            CPVMCL=CL-CPV; EPS=RD/RV; EPSI=1./EPS; GINV=1.0/G; DELTI=1.0/DELT
-
+           
 
 
 
 
             !           ***  INITIALIZE OUTPUT ARRAYS AND PARAMETERS  ***
 
-            FT=0.0;FQ=0.0;FU=0.0,FV=0.0,FTRA=0.0 ! Equivale a do 5 de convect43c.f
+            FT=0.0;FQ=0.0;FU=0.0;FV=0.0;FTRA=0.0 ! Equivale a do 5 de convect43c.f
 
             do_seven: DO  I=1,NL+1
                           RDCP=(RD*(1.-Q(I))+Q(I)*RV)/(CPD*(1.-Q(I))+Q(I)*CPV)
@@ -221,7 +221,7 @@ module convect_emanuel
             PRECIP=0.0; WD=0.0; TPRIME=0.0; QPRIME=0.0; IFLAG=0
 
             if(IPBL /= 0 ) then
-                AdiabaticAdjustment()
+               call AdiabaticAdjustment()
             endif
 
         end subroutine convection
@@ -229,7 +229,13 @@ module convect_emanuel
 !!
 !! PERFORM DRY ADIABATIC ADJUSTMENT
 !
-        subroutine AdiabaticAdjustment(NL,TH)
+        subroutine AdiabaticAdjustment(NL,NTRA,TH,Q,U,V,PH,TRA,TRANT)
+            logical :: lcomp
+            integer :: JC,JN,NL,NTRA
+            integer :: I,J
+
+            lcomp=.true.
+
 
 
 
@@ -248,90 +254,91 @@ module convect_emanuel
                            IF(I.EQ.1)JN=MAX(JN,2)
                            IF(JN.EQ.0) cycle do_thrity
 
-                           12    CONTINUE
+                           do_twelve: do while(lcomp)
 
-                           AHM=0.0; RM=0.0; UM=0.0; VM=0.0
+                               AHM=0.0; RM=0.0; UM=0.0; VM=0.0
 
-                           TRATM=0.0
-
-                           !DO K=1,NTRA
-                           !   TRATM(K)=0.0
-                           !END DO
-
-                           do_quinze: DO 15 J=I,JN
-                                         AHM=AHM+(CPD*(1.-Q(J))+Q(J)*CPV)*T(J)*(PH(J)-PH(J+1))
-                                         RM=RM+Q(J)*(PH(J)-PH(J+1))
-                                         UM=UM+U(J)*(PH(J)-PH(J+1))
-                                         VM=VM+V(J)*(PH(J)-PH(J+1))
-
-                                         DO K=1,NTRA
-                                            TRATM(K)=TRATM(K)+TRA(J,K)*(PH(J)-PH(J+1))
-                                         END DO
-
-                                      end do do_quinze
-
-                           DPHINV=1./(PH(I)-PH(JN+1))
-                           RM=RM*DPHINV
-                           UM=UM*DPHINV
-                           VM=VM*DPHINV
+                               TRATM=0.0
 
                            DO K=1,NTRA
-                              TRATM(K)=TRATM(K)*DPHINV
+                              TRATM(K)=0.0
                            END DO
 
-                           A2=0.0
+                               do_fifteen: DO  J=I,JN
+                                            AHM=AHM+(CPD*(1.-Q(J))+Q(J)*CPV)*T(J)*(PH(J)-PH(J+1))
+                                            RM=RM+Q(J)*(PH(J)-PH(J+1))
+                                            UM=UM+U(J)*(PH(J)-PH(J+1))
+                                            VM=VM+V(J)*(PH(J)-PH(J+1))
 
-                           DO 20 J=I,JN
-                              Q(J)=RM
-                              U(J)=UM                  
-                              V(J)=VM 
+                                            DO K=1,NTRA
+                                               TRATM(K)=TRATM(K)+TRA(J,K)*(PH(J)-PH(J+1))
+                                            END DO
+   
+                                         end do do_fiften
+   
+                               DPHINV=1./(PH(I)-PH(JN+1))
+                               RM=RM*DPHINV
+                               UM=UM*DPHINV
+                               VM=VM*DPHINV
 
-                              DO K=1,NTRA
-                                 TRA(J,K)=TRATM(K)
-                              END DO
+                               !DO K=1,NTRA
+                               !   TRATM(K)=TRATM(K)*DPHINV
+                               !END DO
+                               TRATM =TRATM*DPHINV
+ 
+                               A2=0.0
+ 
+                               do_twenty: DO J=I,JN
+                                  Q(J)=RM
+                                  U(J)=UM                  
+                                  V(J)=VM 
 
-                              RDCP=(RD*(1.-Q(J))+Q(J)*RV)/(CPD*(1.-Q(J))+Q(J)*CPV)  
-                              X=(0.001*P(J))**RDCP
-                              TOLD(J)=T(J)
-                              T(J)=X
-                              A2=A2+(CPD*(1.-Q(J))+Q(J)*CPV)*X*(PH(J)-PH(J+1))
-                           20    CONTINUE
+                                  !DO K=1,NTRA
+                                  TRA(J,:)=TRATM(K)
+                                  !END DO
 
-                           DO 25 J=I,JN
-                              TH(J)=AHM/A2
-                              T(J)=T(J)*TH(J)
-                              TC=TOLD(J)-273.15
-                              ALV=LV0-CPVMCL*TC
-                              QS(J)=QS(J)+QS(J)*(1.+QS(J)*(EPSI-1.))*ALV*(T(J)- &
-                                    TOLD(J))/(RV*TOLD(J)*TOLD(J))
-                           25    CONTINUE
+                                  RDCP=(RD*(1.-Q(J))+Q(J)*RV)/(CPD*(1.-Q(J))+Q(J)*CPV)  
+                                  X=(0.001*P(J))**RDCP
+                                  TOLD(J)=T(J)
+                                  T(J)=X
+                                  A2=A2+(CPD*(1.-Q(J))+Q(J)*CPV)*X*(PH(J)-PH(J+1))
+                               enddo do_twenty
+   
+                               do_twenty_five: DO 25 J=I,JN
+                                  TH(J)=AHM/A2
+                                  T(J)=T(J)*TH(J)
+                                  TC=TOLD(J)-273.15
+                                  ALV=LV0-CPVMCL*TC
+                                  QS(J)=QS(J)+QS(J)*(1.+QS(J)*(EPSI-1.))*ALV*(T(J)- &
+                                        TOLD(J))/(RV*TOLD(J)*TOLD(J))
+                               enddo do_twenty_five
 
-                IF((TH(JN+1)*(1.+Q(JN+1)*EPSI-Q(JN+1))) < (TH(JN)*(1.+Q(JN)*EPSI-Q(JN))))THEN
-                    JN=JN+1
-                    GOTO 12
-                END IF
+                       IF((TH(JN+1)*(1.+Q(JN+1)*EPSI-Q(JN+1))) < (TH(JN)*(1.+Q(JN)*EPSI-Q(JN))))THEN
+                           JN=JN+1
+                       else:
+                           lcomp=.false.
+                       END IF
+
 
                 IF(I.EQ.1)JC=JN 
 
             enddo do_thrity
-C
-C   ***   Remove any supersaturation that results from adjustment ***
-C
-      IF(JC.GT.1)THEN
-       DO 38 J=1,JC
-          IF(QS(J).LT.Q(J))THEN 
-           ALV=LV0-CPVMCL*(T(J)-273.15)  
-           TNEW=T(J)+ALV*(Q(J)-QS(J))/(CPD*(1.-Q(J))+
-     1      CL*Q(J)+QS(J)*(CPV-CL+ALV*ALV/(RV*T(J)*T(J))))
-           ALVNEW=LV0-CPVMCL*(TNEW-273.15)
-           QNEW=(ALV*Q(J)-(TNEW-T(J))*(CPD*(1.-Q(J))+CL*Q(J)))/ALVNEW
-           PRECIP=PRECIP+24.*3600.*1.0E5*(PH(J)-PH(J+1))*
-     1      (Q(J)-QNEW)/(G*DELT*ROWL)
-           T(J)=TNEW
-           Q(J)=QNEW
-           QS(J)=QNEW
-          END IF     
-   38  CONTINUE  
-      END IF
+
+            !   ***   Remove any supersaturation that results from adjustment ***
+
+            IF(JC.GT.1)THEN
+                do_thirty_eight: DO J=1,JC
+                    IF(QS(J).LT.Q(J))THEN 
+                        ALV=LV0-CPVMCL*(T(J)-273.15)  
+                        TNEW=T(J)+ALV*(Q(J)-QS(J))/(CPD*(1.-Q(J))+CL*Q(J)+QS(J)*(CPV-CL+ALV*ALV/(RV*T(J)*T(J))))
+                        ALVNEW=LV0-CPVMCL*(TNEW-273.15)
+                        QNEW=(ALV*Q(J)-(TNEW-T(J))*(CPD*(1.-Q(J))+CL*Q(J)))/ALVNEW
+                        PRECIP=PRECIP+24.*3600.*1.0E5*(PH(J)-PH(J+1))*(Q(J)-QNEW)/(G*DELT*ROWL)
+                        T(J)=TNEW
+                        Q(J)=QNEW
+                        QS(J)=QNEW
+                    END IF     
+                enddo do_thirty_eight  
+            END IF
 
         end subroutine AdiabaticAdjustment
