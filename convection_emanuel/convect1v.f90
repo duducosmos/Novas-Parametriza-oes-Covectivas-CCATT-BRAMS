@@ -61,7 +61,8 @@ module convect_emanuel
 
     real(kind=8), parameter :: CPD=1005.7,CPV=1870.0,CL=2500.0,RV=461.5,RD=287.04,LV0=2.501E6,&
                                G=9.8,ROWL=1000.0 
-    real(kind=8), parameter :: CPVMCL=CL-CPV, EPS=RD/RV, EPSI=1.0/EPS, GINV=1.0/G, DELTI=1.0/DELT
+    real(kind=8), parameter :: CPVMCL=CL-CPV, EPS=RD/RV, EPSI=1.0/EPS, GINV=1.0/G 
+    private AdiabaticAdjustment
 
     contains
 
@@ -192,7 +193,7 @@ module convect_emanuel
             integer, parameter :: NA=70
             
             !
-            integer, dimension(NA) :: NENT,UP,VP,M,MP,TVP,TV,WATER,QP,EP,TH,WT,EVAP,CLW &
+            real(kind=8), dimension(NA) :: NENT,UP,VP,M,MP,TVP,TV,WATER,QP,EP,TH,WT,EVAP,CLW, &
                                       SIGP,TP,TOLD,CPN,LV,LVCP,H,HP,GZ,HM,TRATM
             !
             integer :: ND,NL,NTRA,IFLAG
@@ -202,7 +203,11 @@ module convect_emanuel
             real(kind=8), dimension(NA,NA) :: UENT,VENT,MENT,QENT,ELIJ,SIJ
             real(kind=8), dimension(NA,NTRA) :: TRAP
             real(kind=8), dimension(NA,NA,NTRA) :: TRAENT
-            real(kind=8) ::DELT,PRECIP,WD,TPRIME,QPRIME
+            real(kind=8) ::DELT,PRECIP,WD,TPRIME,QPRIME,DELTI,RDCP,CBMF
+            
+
+            DELTI=1.0/DELT
+
 
            
 
@@ -221,7 +226,7 @@ module convect_emanuel
             PRECIP=0.0; WD=0.0; TPRIME=0.0; QPRIME=0.0; IFLAG=0
 
             if(IPBL /= 0 ) then
-               call AdiabaticAdjustment()
+               call AdiabaticAdjustment(NL,NA,ND,NTRA,TH,Q,U,V,PH,TRA,TRATM,DELT)
             endif
 
         end subroutine convection
@@ -229,10 +234,19 @@ module convect_emanuel
 !!
 !! PERFORM DRY ADIABATIC ADJUSTMENT
 !
-        subroutine AdiabaticAdjustment(NL,NTRA,TH,Q,U,V,PH,TRA,TRANT)
+        subroutine AdiabaticAdjustment(NL,NA,ND,NTRA,TH,Q,U,V,PH,TRA,TRATM,DELT)
             logical :: lcomp
-            integer :: JC,JN,NL,NTRA
-            integer :: I,J
+            integer :: JC,JN,NL,NTRA,ND,NA
+            integer :: I,J,K
+            real(kind=8) :: soma,THBAR,AHM,RM,UM,VM,DPHINV,A2,x,RDCP,TNEW,ALV,ALVNEW,DELT, &
+                            PRECIP,QNEW,TC
+            real(kind=8), dimension(NTRA) :: TRANTM
+            real(kind=8), dimension(ND) ::  T,Q,QS,U,V,P,PH,FT,FQ,FU,FV
+            real(kind=8), dimension(ND,NTRA) :: TRA,FTRA
+            real(kind=8), dimension(NA) :: NENT,UP,VP,M,MP,TVP,TV,WATER,QP,EP,TH,WT,EVAP,CLW, &
+                                           SIGP,TP,TOLD,CPN,LV,LVCP,H,HP,GZ,HM,TRATM
+  
+ 
 
             lcomp=.true.
 
@@ -243,11 +257,11 @@ module convect_emanuel
             do_thrity: DO  I=NL-1,1,-1
 
                            JN=0
-                           SUM=TH(I)*(1.+Q(I)*EPSI-Q(I))
+                           soma=TH(I)*(1.+Q(I)*EPSI-Q(I))
 
                            do_ten: DO J=I+1,NL
-                                      SUM=SUM+TH(J)*(1.+Q(J)*EPSI-Q(J))
-                                      THBAR=SUM/FLOAT(J+1-I)
+                                      soma=soma+TH(J)*(1.+Q(J)*EPSI-Q(J))
+                                      THBAR=soma/FLOAT(J+1-I)
                                       IF((TH(J)*(1.+Q(J)*EPSI-Q(J))).LT.THBAR)JN=J
                                    enddo do_ten    
                      
@@ -260,9 +274,9 @@ module convect_emanuel
 
                                TRATM=0.0
 
-                           DO K=1,NTRA
-                              TRATM(K)=0.0
-                           END DO
+                           !DO K=1,NTRA
+                           !   TRATM(K)=0.0
+                           !END DO
 
                                do_fifteen: DO  J=I,JN
                                             AHM=AHM+(CPD*(1.-Q(J))+Q(J)*CPV)*T(J)*(PH(J)-PH(J+1))
@@ -274,7 +288,7 @@ module convect_emanuel
                                                TRATM(K)=TRATM(K)+TRA(J,K)*(PH(J)-PH(J+1))
                                             END DO
    
-                                         end do do_fiften
+                                         end do do_fifteen
    
                                DPHINV=1./(PH(I)-PH(JN+1))
                                RM=RM*DPHINV
@@ -315,9 +329,10 @@ module convect_emanuel
 
                        IF((TH(JN+1)*(1.+Q(JN+1)*EPSI-Q(JN+1))) < (TH(JN)*(1.+Q(JN)*EPSI-Q(JN))))THEN
                            JN=JN+1
-                       else:
+                       else
                            lcomp=.false.
                        END IF
+                enddo do_twelve
 
 
                 IF(I.EQ.1)JC=JN 
@@ -342,3 +357,6 @@ module convect_emanuel
             END IF
 
         end subroutine AdiabaticAdjustment
+end module  convect_emanuel
+
+
