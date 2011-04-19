@@ -220,7 +220,7 @@ module convect_emanuel
 
             do_seven: DO  I=1,NL+1
                           RDCP=(RD*(1.-Q(I))+Q(I)*RV)/(CPD*(1.-Q(I))+Q(I)*CPV)
-                          TH(I)=T(I)*(1000.0/P(I))**RDCP
+                          TH(I)=T(I)*(1000.0/P(I))**RDCP !Temperatura Potencial do ar umido
                       enddo do_seven
 
             PRECIP=0.0; WD=0.0; TPRIME=0.0; QPRIME=0.0; IFLAG=0
@@ -279,7 +279,7 @@ module convect_emanuel
                            !END DO
 
                                do_fifteen: DO  J=I,JN
-                                            AHM=AHM+(CPD*(1.-Q(J))+Q(J)*CPV)*T(J)*(PH(J)-PH(J+1))
+                                            AHM=AHM+(CPD*(1.-Q(J))+Q(J)*CPV)*T(J)*(PH(J)-PH(J+1)) !(c_{pd)(1-q^{j})+c_{pv}q^{j})T^{j}\delta p^{j}
                                             RM=RM+Q(J)*(PH(J)-PH(J+1))
                                             UM=UM+U(J)*(PH(J)-PH(J+1))
                                             VM=VM+V(J)*(PH(J)-PH(J+1))
@@ -291,14 +291,14 @@ module convect_emanuel
                                          end do do_fifteen
    
                                DPHINV=1./(PH(I)-PH(JN+1))
-                               RM=RM*DPHINV
-                               UM=UM*DPHINV
-                               VM=VM*DPHINV
+                               RM=RM*DPHINV !Media de Q no nivel J
+                               UM=UM*DPHINV !Media de U no nivel J
+                               VM=VM*DPHINV !Media de V no nivel J
 
                                !DO K=1,NTRA
                                !   TRATM(K)=TRATM(K)*DPHINV
                                !END DO
-                               TRATM =TRATM*DPHINV
+                               TRATM =TRATM*DPHINV !Media de TRA no nível J
  
                                A2=0.0
  
@@ -308,21 +308,22 @@ module convect_emanuel
                                   V(J)=VM 
 
                                   !DO K=1,NTRA
-                                  TRA(J,:)=TRATM(K)
+                                  TRA(J,:)=TRATM
                                   !END DO
 
-                                  RDCP=(RD*(1.-Q(J))+Q(J)*RV)/(CPD*(1.-Q(J))+Q(J)*CPV)  
-                                  X=(0.001*P(J))**RDCP
-                                  TOLD(J)=T(J)
+                                  RDCP=(RD*(1.-Q(J))+Q(J)*RV)/(CPD*(1.-Q(J))+Q(J)*CPV)  !R/c_{p}
+                                  X=(0.001*P(J))**RDCP !(p^{j}/p_{0})^{R/c_{p}}
+                                  TOLD(J)=T(J) !Valor Original da Temperatura
                                   T(J)=X
-                                  A2=A2+(CPD*(1.-Q(J))+Q(J)*CPV)*X*(PH(J)-PH(J+1))
+                                  A2=A2+(CPD*(1.-Q(J))+Q(J)*CPV)*X*(PH(J)-PH(J+1)) !(c_{pd}(1-q_{m})+c_{pv}q_{m})(p^{j}/p_{0})^{R/c_{p}}\delta p^{j}
+
                                enddo do_twenty
    
                                do_twenty_five: DO J=I,JN
-                                  TH(J)=AHM/A2
-                                  T(J)=T(J)*TH(J)
+                                  TH(J)=AHM/A2 !\teta^{j}=((c_{pd)(1-q^{j})+c_{pv}q^{j})T^{j}\delta p^{j})/((c_{pd}(1-q_{m})+c_{pv}q_{m})(p^{j}/p_{0})^{R/c_{p}}\delta p^{j})
+                                  T(J)=T(J)*TH(J) !T^{j}=\teta^{i}(p^{j}/p_{0})^{R/c_{p}}
                                   TC=TOLD(J)-273.15
-                                  ALV=LV0-CPVMCL*TC
+                                  ALV=LV0-CPVMCL*TC !Calor Latente L_{v} = L_{v0}+(c_{pv}-c_{l})(T-273.15)
                                   QS(J)=QS(J)+QS(J)*(1.+QS(J)*(EPSI-1.))*ALV*(T(J)- &
                                         TOLD(J))/(RV*TOLD(J)*TOLD(J))
                                enddo do_twenty_five
