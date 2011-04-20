@@ -61,8 +61,9 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
     integer :: ND !It will be obtained by using size function.
     integer :: NTRA !It will be obtained by using size function.
     integer :: NL
-
-
+!
+!*****************************************************************************************************
+!
 
 !----------------------------------------------------------------------------
 !    ***   On Output:         ***
@@ -91,6 +92,10 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
     integer :: IFLAG
 
 !
+!************************************************************************************************************
+!
+
+!
 !    FT:   Array of temperature tendency (K/s) of dimension ND, defined at same
 !            grid levels as T, Q, QS and P.
 
@@ -104,6 +109,9 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 
     real,allocatable, dimension(:) ::  FT,FQ,FU,FV !Dimension ND
 
+!
+!************************************************************************************************************
+!
 !
 !    FTRA: Array of forcing of tracer content, in tracer mixing ratio per
 !            second, defined at same levels as T. Dimensioned (ND,NTRA).
@@ -148,9 +156,15 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 
     real, allocatable,dimension(:) :: NENT,UP,VP,M,MP,TVP,TV,WATER,QP,EP,TH,WT,EVAP,CLW, &
                                   SIGP,TP,TOLD,CPN,LV,LVCP,H,HP,GZ,HM  !All this matriz have dimension equal NA
+    real,allocatable,dimension(:) :: TRATM,TRAE
+
     !
     integer :: i,j,k,l
 
+
+!
+!************************************************************************************************************************************************
+!
 
 ! -----------------------------------------------------------------------
 !
@@ -168,6 +182,11 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !   ***                      the surface layer)                      ***
 
     integer, parameter :: IPBL=0,MINORIG=1
+
+!
+!*********************************************************************************************************************************************
+!
+
 !
 !------------------------------------------------------------------------------
 !
@@ -203,6 +222,10 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
                                OMTRAIN=50.0,OMTSNOW=5.5,COEFFR=1.0,COEFFS=0.8,CU=0.7,   &
                                BETA=10.0,DTMAX=0.9,ALPHA=0.2,DAMP=0.1
 
+!
+!****************************************************************************************************************************************************************************************
+!
+
 !   ***        ASSIGN VALUES OF THERMODYNAMIC CONSTANTS,        ***
 !   ***            GRAVITY, AND LIQUID WATER DENSITY.           ***
 !   ***             THESE SHOULD BE CONSISTENT WITH             ***
@@ -215,14 +238,20 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
  
     logical :: T1_EntryMatriz ! This Variable is used by copem_set_matriz_at1, if the input parameters are O.K. the code continue and this varyable is set as .TRUE. 
     private T1_EntryMatriz
-    private copem_AdiabaticAdjustment,copem_set_matriz_at1,copem_free_matriz
+    private copem_AdiabaticAdjustment,copem_set_matriz_at1,copem_free_matriz,copem_Geo_Heat_SEnergy
 
 
-
+!
+!****************************************************************************************************************************************************************************************
+!
     contains
 
-
-
+!
+!*********************************************************************************************************************************************************************************
+!!
+!!
+!*********************************************************************************************************************************************************************************
+!
         subroutine copem_convection(T1,   Q1,    QS1,     U1,    V1,      TRA1,    P1,    PH1,&
                               NL, DELT, IFLAG,  FT,     FQ,   FU,&
                               FV,  FTRA, PRECIP, WD,   TPRIME, QPRIME, CBMF)    
@@ -231,8 +260,13 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
             real, dimension(:,:) :: TRA1,FTRA
    
             real, dimension(:) :: FT,FQ,FU,FV
+            
             integer :: NL,IFLAG
             real :: DELT,PRECIP,WD,TPRIME,QPRIME,CBMF
+
+
+            integer :: IHMIN
+            real :: AHMIN
            
 
             call copem_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1) ! The first automatic test of this parametrization, difine if  T1_EntryMatriz will be .TRUE. or .FALSE.
@@ -255,24 +289,75 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
                 if(IPBL /= 0 ) then
                    call copem_AdiabaticAdjustment()
                 endif
+
+                call copem_Geo_Heat_SEnergy(NL,IHMIN,AHMIN)
 !
 !
 !
 !
 !
-!
+                call copem_free_matriz!
             else
                 print*,'An erro in the input parameters'
                 continue
             end if
 
-            call copem_free_matriz
+            
 
 
         end subroutine  copem_convection
 !
+!********************************************************************************************************************************
+!! *** CALCULATE ARRAYS OF GEOPOTENTIAL, HEAT CAPACITY AND STATIC ENERGY
+!!
+!********************************************************************************************************************************
+!
+
+        subroutine copem_Geo_Heat_SEnergy(NL,IHMIN,AHMIN)
+            implicit none
+            real :: AHMIN,TVX,TVY
+            integer :: NL,IHMIN
+            GZ(1)=0.0
+            CPN(1)=CPD*(1.-Q(1))+Q(1)*CPV
+            H(1)=T(1)*CPN(1)
+            LV(1)=LV0-CPVMCL*(T(1)-273.15)
+            HM(1)=LV(1)*Q(1)
+            TV(1)=T(1)*(1.+Q(1)*EPSI-Q(1))
+            AHMIN=1.0E12
+            IHMIN=NL
+            do_forty: DO I=2,NL+1
+                TVX=T(I)*(1.+Q(I)*EPSI-Q(I))
+                TVY=T(I-1)*(1.+Q(I-1)*EPSI-Q(I-1))
+                GZ(I)=GZ(I-1)+0.5*RD*(TVX+TVY)*(P(I-1)-P(I))/PH(I)
+                CPN(I)=CPD*(1.-Q(I))+CPV*Q(I)
+                H(I)=T(I)*CPN(I)+GZ(I)
+                LV(I)=LV0-CPVMCL*(T(I)-273.15)
+                HM(I)=(CPD*(1.-Q(I))+CL*Q(I))*(T(I)-T(1))+LV(I)*Q(I)+GZ(I)
+                TV(I)=T(I)*(1.+Q(I)*EPSI-Q(I))
+!
+!!  ***  Find level of minimum moist static energy    ***
+
+                IF(I.GE.MINORIG.AND.HM(I).LT.AHMIN.AND.HM(I).LT.HM(I-1))THEN
+                    AHMIN=HM(I)
+                    IHMIN=I
+                END IF
+
+            end do do_forty
+
+            IHMIN=MIN(IHMIN, NL-1)
+
+       end subroutine copem_Geo_Heat_SEnergy
+
+
+
+
+
+!
+!************************************************************************************************************************************************
 !!
 !! PERFORM DRY ADIABATIC ADJUSTMENT
+!!
+!************************************************************************************************************************************************
 !
         subroutine copem_AdiabaticAdjustment
             implicit none
@@ -280,7 +365,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
             integer :: JC,JN,ierr
             real :: soma,THBAR,AHM,RM,UM,VM,DPHINV,A2,x,RDCP,TNEW,ALV,ALVNEW, &
                             QNEW,TC
-            real, dimension(NA) :: TH,TRATM,TOLD
+!            real, dimension(NA) :: TH,TRATM,TOLD
 
   
 
@@ -396,18 +481,18 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 
         end subroutine copem_AdiabaticAdjustment
 
+!*****************************************************************************************************************************************
 !!The Subroutine copem_set_matriz_at1 make a test of the dimension of the arrays  T1,Q1,QS1,P1,PH1,FT1,FQ1
 !! And allocate the equivalente arrays T,Q,QS,P,PH,FT,FQ
 !! These array must have same dimension ND. If its OK, all matriz are dimensioned.
-
+!*****************************************************************************************************************************************
 
         subroutine copem_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1)
         integer :: N1,N2,N3,N4,N5,N6,N7,N8,N9
         real, dimension(:) :: T1,Q1,QS1,U1,V1,P1,PH1
         real, dimension(:,:) :: TRA1
         integer, dimension(2) :: NDNTRA
-        integer :: ierr1,ierr2,ierr3,ierr4,ierr5,ierr6,ierr7,ierr8,ierr9,ierr10,ierr11,ierr12,ierr13
-
+        integer :: ierr1,ierr2,ierr3,ierr4,ierr5,ierr6,ierr7,ierr8
 
             N1=size(T1); N2=size(Q1); N3=size(QS1); N4=size(U1); N5=size(V1); N6=size(P1); N7=size(PH1)
             NDNTRA = shape(TRA1)
@@ -438,18 +523,18 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
                     if(ierr7 /= 0) print*, 'Allocated error U'
                     allocate(TRA(ND,NTRA),stat=ierr8)
                     if(ierr8 /= 0) print*, 'Allocated error TRA'
-                    allocate(TH(NA),stat=ierr9)
-                    if(ierr9 /= 0) print*, 'Allocated error TRA'
 
+                    allocate(TH(NA))
+                    allocate(FTRA(ND,NTRA))
+                    allocate(FQ(ND)); allocate(FU(ND)); allocate(FV(ND))
+                    allocate(FT(ND)); allocate(UENT(NA,NA)); allocate(VENT(NA,NA)); allocate(TRAENT(NA,NA,NTRA))
+                    allocate(TRATM(NA)); allocate(UP(NA)); allocate(TRAP(NA,NTRA)); allocate(M(NA)); allocate(MP(NA))
+                    allocate(MENT(NA,NA)); allocate(QENT(NA,NA)); allocate(ELIJ(NA,NA)); allocate(SIJ(NA,NA))
+                    allocate(TVP(NA)); allocate(TV(NA)); allocate(WATER(NA)); allocate(QP(NA)); allocate(EP(NA))
+                    allocate(WT(NA)); allocate(EVAP(NA)); allocate(CLW(NA)); allocate(SIGP(NA)); allocate(TP(NA))
+                    allocate(TOLD(NA)); allocate(CPN(NA)); allocate(LV(NA)); allocate(LVCP(NA)); allocate(H(NA))
+                    allocate(HP(NA)); allocate(GZ(NA)); allocate(HM(NA));allocate(NENT(NA))
 
-                    allocate(FT(ND),stat=ierr10)
-                    if(ierr10 /= 0) print*, 'Allocated error TRA'                   
-                    allocate(FQ(ND),stat=ierr11)
-                    if(ierr11 /= 0) print*, 'Allocated error TRA'
-                    allocate(FU(ND),stat=ierr12)
-                    if(ierr12 /= 0) print*, 'Allocated error TRA'
-                    allocate(FV(ND),stat=ierr13)
-                    if(ierr13 /= 0) print*, 'Allocated error TRA'
 
 
 
@@ -487,24 +572,28 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
             
 
         end subroutine copem_set_matriz_at1
+!
+!************************************************************************************************************************************
 !!
 !! This subroutine is used to deallocate arrays T,Q,QS,P,PH,FT,FQ and matriz TRA
 !!
+!************************************************************************************************************************************
+!
         subroutine copem_free_matriz
-            deallocate(T)
-            deallocate(Q)
-            deallocate(QS)
-            deallocate(U)
-            deallocate(V)
-            deallocate(P)
-            deallocate(PH)
-            deallocate(TRA)
-            deallocate(TH)
-            deallocate(FV)
-            deallocate(FU)
-            deallocate(FQ)
-            deallocate(FT)
-            
+            deallocate(T); deallocate(Q); deallocate(QS); deallocate(U)
+            deallocate(V); deallocate(P); deallocate(PH); deallocate(TRA)
+            deallocate(TH); deallocate(FV); deallocate(FU); deallocate(FQ)
+            deallocate(FT); deallocate(FTRA)
+
+            deallocate(TH); deallocate(FTRA); deallocate(FQ); deallocate(FU); deallocate(FV)
+            deallocate(FT); deallocate(UENT); deallocate(VENT); deallocate(TRAENT)
+            deallocate(TRATM); deallocate(UP); deallocate(TRAP); deallocate(M); deallocate(MP)
+            deallocate(MENT); deallocate(QENT); deallocate(ELIJ); deallocate(SIJ)
+            deallocate(TVP); deallocate(TV); deallocate(WATER); deallocate(QP); deallocate(EP)
+            deallocate(WT); deallocate(EVAP); deallocate(CLW); deallocate(SIGP); deallocate(TP)
+            deallocate(TOLD); deallocate(CPN); deallocate(LV); deallocate(LVCP); deallocate(H)
+            deallocate(HP); deallocate(GZ); deallocate(HM); deallocate(NENT)
+           
 
         end subroutine copem_free_matriz
 
