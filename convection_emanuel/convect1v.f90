@@ -1,5 +1,5 @@
                   
-module copem !Convective parametrization based in K. A. Emanuel (1991,1999) scheme
+module copes !Convective parametrization based in K. A. Emanuel (1991,1999) scheme
    implicit none 
 !-----------------------------------------------------------------------------
 !    *** On input:      ***
@@ -61,6 +61,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
     integer :: ND !It will be obtained by using size function.
     integer :: NTRA !It will be obtained by using size function.
     integer :: NL
+    private :: T,Q,QS,U,V,P,PH,TRA,ND,NTRA,NL
 !
 !*****************************************************************************************************
 !
@@ -90,6 +91,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !                                 does not cause the scheme to terminate.
 
     integer :: IFLAG
+    private IFLAG
 
 !
 !************************************************************************************************************
@@ -108,7 +110,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !    FV:   Same as FU, but for forcing of meridional velocity.
 
     real,allocatable, dimension(:) ::  FT,FQ,FU,FV !Dimension ND
-
+    private :: FT,FQ,FU,FV
 !
 !************************************************************************************************************
 !
@@ -161,6 +163,11 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
     !
     integer :: i,j,k,l
 
+    private :: NA,FTRA,PRECIP,WD,TPRIME,QPRIME,CBMF
+    private :: DELT,DELTI,RDCP,UENT,VENT,MENT,QENT,ELIJ,SIJ
+    private :: TRAP,TRAENT,NENT,UP,VP,M,MP,TVP,TV,WATER,QP,EP,TH,WT,EVAP,CLW
+    private :: SIGP,TP,TOLD,CPN,LV,LVCP,H,HP,GZ,HM, TRATM,TRAE
+    private :: i,j,k,l
 
 !
 !************************************************************************************************************************************************
@@ -182,7 +189,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !   ***                      the surface layer)                      ***
 
     integer, parameter :: IPBL=0,MINORIG=1
-
+    private :: IPBL,MINORIG
 !
 !*********************************************************************************************************************************************
 !
@@ -221,6 +228,10 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
     real, parameter :: ELCRIT=0.0011,TLCRIT=-55.0,ENTP=1.5,SIGD=0.05,SIGS=0.12, &
                                OMTRAIN=50.0,OMTSNOW=5.5,COEFFR=1.0,COEFFS=0.8,CU=0.7,   &
                                BETA=10.0,DTMAX=0.9,ALPHA=0.2,DAMP=0.1
+    private :: ELCRIT,TLCRIT,ENTP,SIGD,SIGS, &
+                               OMTRAIN,OMTSNOW,COEFFR,COEFFS,CU,   &
+                               BETA,DTMAX,ALPHA,DAMP
+
 
 !
 !****************************************************************************************************************************************************************************************
@@ -237,8 +248,12 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
     real, parameter :: CPVMCL=CL-CPV, EPS=RD/RV, EPSI=1.0/EPS, GINV=1.0/G
  
     logical :: T1_EntryMatriz ! This Variable is used by copem_set_matriz_at1, if the input parameters are O.K. the code continue and this varyable is set as .TRUE. 
+
+    private :: CPD,CPV,CL,RV,RD,LV0,&
+               G,ROWL,CPVMCL, EPS, EPSI, GINV
+
     private T1_EntryMatriz
-    private copem_AdiabaticAdjustment,copem_set_matriz_at1,copem_free_matriz,copem_Geo_Heat_SEnergy
+    private copes_AdiabaticAdjustment,copes_set_matriz_at1,copes_free_matriz,copes_Geo_Heat_SEnergy
 
 
 !
@@ -252,7 +267,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !!
 !*********************************************************************************************************************************************************************************
 !
-        subroutine copem_convection(T1,   Q1,    QS1,     U1,    V1,      TRA1,    P1,    PH1,&
+        subroutine copes_convection(T1,   Q1,    QS1,     U1,    V1,      TRA1,    P1,    PH1,&
                               NL, DELT, IFLAG,  FT,     FQ,   FU,&
                               FV,  FTRA, PRECIP, WD,   TPRIME, QPRIME, CBMF)    
             implicit none 
@@ -269,7 +284,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
             real :: AHMIN
            
 
-            call copem_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1) ! The first automatic test of this parametrization, difine if  T1_EntryMatriz will be .TRUE. or .FALSE.
+            call copes_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1) ! The first automatic test of this parametrization, difine if  T1_EntryMatriz will be .TRUE. or .FALSE.
 
 
             if( T1_EntryMatriz .eqv. .TRUE.) then
@@ -287,16 +302,16 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
                 PRECIP=0.0; WD=0.0; TPRIME=0.0; QPRIME=0.0; IFLAG=0
 
                 if(IPBL /= 0 ) then
-                   call copem_AdiabaticAdjustment()
+                   call copes_AdiabaticAdjustment()
                 endif
 
-                call copem_Geo_Heat_SEnergy(NL,IHMIN,AHMIN)
+                call copes_Geo_Heat_SEnergy(NL,IHMIN,AHMIN)
 !
 !
 !
 !
 !
-                call copem_free_matriz!
+                call copes_free_matriz!
             else
                 print*,'An erro in the input parameters'
                 continue
@@ -305,7 +320,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
             
 
 
-        end subroutine  copem_convection
+        end subroutine  copes_convection
 !
 !********************************************************************************************************************************
 !! *** CALCULATE ARRAYS OF GEOPOTENTIAL, HEAT CAPACITY AND STATIC ENERGY
@@ -313,7 +328,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !********************************************************************************************************************************
 !
 
-        subroutine copem_Geo_Heat_SEnergy(NL,IHMIN,AHMIN)
+        subroutine copes_Geo_Heat_SEnergy(NL,IHMIN,AHMIN)
             implicit none
             real :: AHMIN,TVX,TVY
             integer :: NL,IHMIN
@@ -346,7 +361,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 
             IHMIN=MIN(IHMIN, NL-1)
 
-       end subroutine copem_Geo_Heat_SEnergy
+       end subroutine copes_Geo_Heat_SEnergy
 
 
 
@@ -359,7 +374,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !!
 !************************************************************************************************************************************************
 !
-        subroutine copem_AdiabaticAdjustment
+        subroutine copes_AdiabaticAdjustment
             implicit none
             logical :: lcomp
             integer :: JC,JN,ierr
@@ -479,7 +494,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
             END IF
 
 
-        end subroutine copem_AdiabaticAdjustment
+        end subroutine copes_AdiabaticAdjustment
 
 !*****************************************************************************************************************************************
 !!The Subroutine copem_set_matriz_at1 make a test of the dimension of the arrays  T1,Q1,QS1,P1,PH1,FT1,FQ1
@@ -487,7 +502,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !! These array must have same dimension ND. If its OK, all matriz are dimensioned.
 !*****************************************************************************************************************************************
 
-        subroutine copem_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1)
+        subroutine copes_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1)
         integer :: N1,N2,N3,N4,N5,N6,N7,N8,N9
         real, dimension(:) :: T1,Q1,QS1,U1,V1,P1,PH1
         real, dimension(:,:) :: TRA1
@@ -571,7 +586,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 
             
 
-        end subroutine copem_set_matriz_at1
+        end subroutine copes_set_matriz_at1
 !
 !************************************************************************************************************************************
 !!
@@ -579,7 +594,7 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
 !!
 !************************************************************************************************************************************
 !
-        subroutine copem_free_matriz
+        subroutine copes_free_matriz
             deallocate(T); deallocate(Q); deallocate(QS); deallocate(U)
             deallocate(V); deallocate(P); deallocate(PH); deallocate(TRA)
             deallocate(TH); deallocate(FV); deallocate(FU); deallocate(FQ)
@@ -595,8 +610,8 @@ module copem !Convective parametrization based in K. A. Emanuel (1991,1999) sche
             deallocate(HP); deallocate(GZ); deallocate(HM); deallocate(NENT)
            
 
-        end subroutine copem_free_matriz
+        end subroutine copes_free_matriz
 
-end module  copem
+end module  copes
 
 
