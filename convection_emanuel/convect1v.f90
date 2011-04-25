@@ -280,8 +280,8 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
             real :: DELT,PRECIP,WD,TPRIME,QPRIME,CBMF
 
 
-            integer :: IHMIN
-            real :: AHMIN
+            integer :: IHMIN,NL,NK
+            real :: AHMIN, AHMAX
            
 
             call copes_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1) !> The first automatic test of this parametrization, difine if  T1_EntryMatriz will be .TRUE. or .FALSE.
@@ -305,7 +305,11 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                    call copes_AdiabaticAdjustment()
                 endif
 
-                call copes_Geo_Heat_SEnergy(NL,IHMIN,AHMIN)
+                call copes_Geo_Heat_SEnergy(NL,IHMIN,AHMIN) !CALCULATE ARRAYS OF GEOPOTENTIAL, HEAT CAPACITY AND STATIC ENERGY
+
+!
+                call copes_Level(NL,IHMIN,AHMAX,NK) !Find that model level below the level of minimum moist !
+
 !>
 !>
 !>
@@ -350,7 +354,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                 HM(I)=(CPD*(1.-Q(I))+CL*Q(I))*(T(I)-T(1))+LV(I)*Q(I)+GZ(I)
                 TV(I)=T(I)*(1.+Q(I)*EPSI-Q(I))
 !>
-!>!>  ***  Find level of minimum moist static energy    ***
+!>  ***  Find level of minimum moist static energy    ***
 
                 IF(I.GE.MINORIG.AND.HM(I).LT.AHMIN.AND.HM(I).LT.HM(I-1))THEN
                     AHMIN=HM(I)
@@ -361,17 +365,110 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 
             IHMIN=MIN(IHMIN, NL-1)
 
-       end subroutine copes_Geo_Heat_SEnergy
+        end subroutine copes_Geo_Heat_SEnergy
+
+!**************************************************************************************************************************************
+!
+!>  ***     Find that model level below the level of minimum moist       ***
+!>  ***  static energy that has the maximum value of moist static energy ***
+!
+!**************************************************************************************************************************************
+
+        subroutine copes_Level(NL,IHMIN,AHMAX,NK)
+            integer :: IHMIN,NK,ICB,NL
+            real :: AHMAX,RH,CHI,PLCL
+!
+!>  ***     Find that model level below the level of minimum moist       ***
+!>  ***  static energy that has the maximum value of moist static energy ***
+!
+            AHMAX=0.0
+            do_forty_tow: DO  I=MINORIG,IHMIN
+                IF(HM(I).GT.AHMAX)THEN
+                    NK=I
+                    AHMAX=HM(I)
+                END IF
+            end do do_forty_tow
+!
+!  ***  CHECK WHETHER PARCEL LEVEL TEMPERATURE AND SPECIFIC HUMIDITY   ***
+!  ***                          ARE REASONABLE                         ***
+!  ***      Skip convection if HM increases monotonically upward       ***
+!
+            IF(T(NK).LT.250.0.OR.Q(NK).LE.0.0.OR.IHMIN.EQ.(NL-1))THEN
+                IFLAG=0
+                CBMF=0.0
+                RETURN
+            END IF
+!
+!   ***  CALCULATE LIFTED CONDENSATION LEVEL OF AIR AT PARCEL ORIGIN LEVEL ***
+!   ***       (WITHIN 0.2% OF FORMULA OF BOLTON, MON. WEA. REV.,1980)      ***
+!
+            RH=Q(NK)/QS(NK)
+            CHI=T(NK)/(1669.0-122.0*RH-T(NK))
+            PLCL=P(NK)*(RH**CHI)
+            IF(PLCL.LT.200.0.OR.PLCL.GE.2000.0)THEN
+                IFLAG=2
+                CBMF=0.0
+                RETURN
+            END IF
+!
+!   ***  CALCULATE FIRST LEVEL ABOVE LCL (=ICB)  ***
+!
+            ICB=NL-1
+            DO 50 I=NK+1,NL
+               IF(P(I).LT.PLCL)THEN
+                   ICB=MIN(ICB,I)
+               END IF
+            50   CONTINUE
+            IF(ICB.GE.(NL-1))THEN
+               IFLAG=3
+               CBMF=0.0
+               RETURN
+            END IF
+        end subroutine copes_Level
 
 
+
+
+!***************************************************************************************************
+!>   *** FIND TEMPERATURE UP THROUGH ICB AND TEST FOR INSTABILITY           ***
+!***************************************************************************************************
+
+        subroutine copes_TInstability(NL,NK)
+            integer :: NL,NK
+!
+!   *** SUBROUTINE TLIFT CALCULATES PART OF THE LIFTED PARCEL VIRTUAL      ***
+!   ***  TEMPERATURE, THE ACTUAL TEMPERATURE AND THE ADIABATIC             ***
+!   ***                   LIQUID WATER CONTENT                             ***
+!
+            CALL copes_TLIFT(P,T,Q,QS,GZ,ICB,NK,TVP,TP,CLW,ND,NL,1)
+            do_fifty_four: DO  I=NK,ICB
+                TVP(I)=TVP(I)-TP(I)*Q(NK)
+            end do do_fifty_four
+!
+!   ***  If there was no convection at last time step and parcel    ***
+!   ***       is stable at ICB then skip rest of calculation        ***
+!
+            IF(CBMF.EQ.0.0.AND.TVP(ICB).LE.(TV(ICB)-DTMAX))THEN
+                IFLAG=0
+                RETURN
+            END IF
+!
+!   ***  IF THIS POINT IS REACHED, MOIST CONVECTIVE ADJUSTMENT IS NECESSARY ***
+!
+            IF(IFLAG.NE.4)IFLAG=1
+!
+!   ***  FIND THE REST OF THE LIFTED PARCEL TEMPERATURES          ***
+!
+            CALL copes_TLIFT(P,T,Q,QS,GZ,ICB,NK,TVP,TP,CLW,ND,NL,2)
+        end subroutine copes_TInstability
 
 
 
 !>
 !>************************************************************************************************************************************************
-!>!>
-!>!> PERFORM DRY ADIABATIC ADJUSTMENT
-!>!>
+!>
+!> PERFORM DRY ADIABATIC ADJUSTMENT
+!>
 !>************************************************************************************************************************************************
 !>
         subroutine copes_AdiabaticAdjustment
@@ -589,9 +686,9 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
         end subroutine copes_set_matriz_at1
 !>
 !>************************************************************************************************************************************
-!>!>
-!>!> This subroutine is used to deallocate arrays T,Q,QS,P,PH,FT,FQ and matriz TRA
-!>!>
+!>
+!> This subroutine is used to deallocate arrays T,Q,QS,P,PH,FT,FQ and matriz TRA
+!>
 !>************************************************************************************************************************************
 !>
         subroutine copes_free_matriz
@@ -611,6 +708,70 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
            
 
         end subroutine copes_free_matriz
+
+
+
+        SUBROUTINE copes_TLIFT(NK,TVP,TPK,CLW,NL,KK)
+            integer :: NL, KK,NK,NST,NSB
+
+            real :: CPINV, CPP,TG,QG,ALV,S,TC,DENOM,ES,         
+!   ***  CALCULATE CERTAIN PARCEL QUANTITIES, INCLUDING STATIC ENERGY   ***
+!
+            AH0=(CPD*(1.-Q(NK))+CL*Q(NK))*T(NK)+Q(NK)*(LV0-CPVMCL*(T(NK)-273.15))+GZ(NK)
+            CPP=CPD*(1.-Q(NK))+Q(NK)*CPV
+            CPINV=1./CPP
+!
+            IF(KK.EQ.1)THEN
+!
+!   ***   CALCULATE LIFTED PARCEL QUANTITIES BELOW CLOUD BASE   ***
+!
+               do_fifty: DO  I=1,ICB-1
+                   CLW(I)=0.0
+               end do do_fifty
+               do_a_hundred: DO 100 I=NK,ICB-1
+                   TPK(I)=T(NK)-(GZ(I)-GZ(NK))*CPINV
+                   TVP(I)=TPK(I)*(1.+Q(NK)*EPSI)
+               end do do_a_hundred
+            END IF
+
+!    ***  FIND LIFTED PARCEL QUANTITIES ABOVE CLOUD BASE    ***
+!
+            NST=ICB
+            NSB=ICB
+            IF(KK.EQ.2)THEN  
+                NST=NL
+                NSB=ICB+1
+            END IF
+            do_three_hunded: DO I=NSB,NST
+                TG=T(I)
+                QG=QS(I)
+                ALV=LV0-CPVMCL*(T(I)-273.15)
+                do_tow_hundred: DO 200 J=1,2
+                    S=CPD+ALV*ALV*QG/(RV*T(I)*T(I))
+                    S=1./S
+                    AHG=CPD*TG+(CL-CPD)*Q(NK)*T(I)+ALV*QG+GZ(I)
+                    TG=TG+S*(AH0-AHG)
+                    TG=MAX(TG,35.0)
+                    TC=TG-273.15
+                    DENOM=243.5+TC
+                    IF(TC.GE.0.0)THEN  
+                        ES=6.112*EXP(17.67*TC/DENOM)
+                    ELSE  
+                        ES=EXP(23.33086-6111.72784/TG+0.15215*LOG(TG))
+                    END IF  
+                    QG=EPS*ES/(P(I)-ES*(1.-EPS))
+                end do do_tow_hundred
+                TPK(I)=(AH0-(CL-CPD)*Q(NK)*T(I)-GZ(I)-ALV*QG)/CPD
+                CLW(I)=Q(NK)-QG
+                CLW(I)=MAX(0.0,CLW(I))
+                RG=QG/(1.-Q(NK))
+                TVP(I)=TPK(I)*(1.+RG*EPSI)
+            end do do_three_hundred
+            RETURN
+        end subroutine copes_TLIFT
+
+
+
 
 end module  copes
 
