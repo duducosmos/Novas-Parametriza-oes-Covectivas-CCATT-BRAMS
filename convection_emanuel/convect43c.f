@@ -364,6 +364,7 @@ C
           END IF
    40   CONTINUE
         IHMIN=MIN(IHMIN, NL-1)
+C Ok. Anterior
 C
 C  ***     Find that model level below the level of minimum moist       ***
 C  ***  static energy that has the maximum value of moist static energy ***
