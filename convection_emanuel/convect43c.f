@@ -448,6 +448,8 @@ C
          EP(I)=0.0
          SIGP(I)=SIGS
    57   CONTINUE
+
+C OK
         DO 60 I=NK+1,NL
          TCA=TP(I)-273.15
          IF(TCA.GE.0.0)THEN

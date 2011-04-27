@@ -280,7 +280,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
             real :: DELT,PRECIP,WD,TPRIME,QPRIME,CBMF
 
 
-            integer :: IHMIN,NL,NK
+            integer :: IHMIN,NK
             real :: AHMIN, AHMAX
            
 
@@ -434,13 +434,13 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 !***************************************************************************************************
 
         subroutine copes_TInstability(NL,NK)
-            integer :: NL,NK
+            integer :: NL,NK,ICB
 !
 !   *** SUBROUTINE TLIFT CALCULATES PART OF THE LIFTED PARCEL VIRTUAL      ***
 !   ***  TEMPERATURE, THE ACTUAL TEMPERATURE AND THE ADIABATIC             ***
 !   ***                   LIQUID WATER CONTENT                             ***
 !
-            CALL copes_TLIFT(P,T,Q,QS,GZ,ICB,NK,TVP,TP,CLW,ND,NL,1)
+            CALL copes_TLIFT(ICB,NK,TVP,TP,CLW,NL,1)
             do_fifty_four: DO  I=NK,ICB
                 TVP(I)=TVP(I)-TP(I)*Q(NK)
             end do do_fifty_four
@@ -459,7 +459,13 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 !
 !   ***  FIND THE REST OF THE LIFTED PARCEL TEMPERATURES          ***
 !
-            CALL copes_TLIFT(P,T,Q,QS,GZ,ICB,NK,TVP,TP,CLW,ND,NL,2)
+            CALL copes_TLIFT(ICB,NK,TVP,TP,CLW,NL,2)
+
+            do_fifty_seven: DO  I=1,NK
+                EP(I)=0.0
+                SIGP(I)=SIGS
+            end do do_fifty_seven
+
         end subroutine copes_TInstability
 
 
@@ -711,10 +717,11 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 
 
 
-        SUBROUTINE copes_TLIFT(NK,TVP,TPK,CLW,NL,KK)
-            integer :: NL, KK,NK,NST,NSB
+        SUBROUTINE copes_TLIFT(ICB,NK,TVP,TPK,CLW,NL,KK)
+            integer :: NL, KK,NK,NST,NSB,ICB
 
-            real :: CPINV, CPP,TG,QG,ALV,S,TC,DENOM,ES,         
+            real :: CPINV, CPP,TG,QG,ALV,S,TC,DENOM,ES,AH0,AHG,RG
+            real, dimension(ND) :: CLW,TPK,TVP 
 !   ***  CALCULATE CERTAIN PARCEL QUANTITIES, INCLUDING STATIC ENERGY   ***
 !
             AH0=(CPD*(1.-Q(NK))+CL*Q(NK))*T(NK)+Q(NK)*(LV0-CPVMCL*(T(NK)-273.15))+GZ(NK)
@@ -728,7 +735,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                do_fifty: DO  I=1,ICB-1
                    CLW(I)=0.0
                end do do_fifty
-               do_a_hundred: DO 100 I=NK,ICB-1
+               do_a_hundred: DO I=NK,ICB-1
                    TPK(I)=T(NK)-(GZ(I)-GZ(NK))*CPINV
                    TVP(I)=TPK(I)*(1.+Q(NK)*EPSI)
                end do do_a_hundred
@@ -746,7 +753,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                 TG=T(I)
                 QG=QS(I)
                 ALV=LV0-CPVMCL*(T(I)-273.15)
-                do_tow_hundred: DO 200 J=1,2
+                do_tow_hundred: DO J=1,2
                     S=CPD+ALV*ALV*QG/(RV*T(I)*T(I))
                     S=1./S
                     AHG=CPD*TG+(CL-CPD)*Q(NK)*T(I)+ALV*QG+GZ(I)
@@ -756,7 +763,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                     DENOM=243.5+TC
                     IF(TC.GE.0.0)THEN  
                         ES=6.112*EXP(17.67*TC/DENOM)
-                    ELSE  
+                    ELSE 
                         ES=EXP(23.33086-6111.72784/TG+0.15215*LOG(TG))
                     END IF  
                     QG=EPS*ES/(P(I)-ES*(1.-EPS))
@@ -766,7 +773,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                 CLW(I)=MAX(0.0,CLW(I))
                 RG=QG/(1.-Q(NK))
                 TVP(I)=TPK(I)*(1.+RG*EPSI)
-            end do do_three_hundred
+            end do do_three_hunded
             RETURN
         end subroutine copes_TLIFT
 
