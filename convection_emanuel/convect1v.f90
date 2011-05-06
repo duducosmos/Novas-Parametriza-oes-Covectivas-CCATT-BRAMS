@@ -16,7 +16,8 @@
 
                   
 module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) scheme
-   implicit none 
+    implicit none
+    private    
 !>-----------------------------------------------------------------------------
 !>    *** On input:      ***
 !>
@@ -77,7 +78,6 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
     integer :: ND !>It will be obtained by using size function.
     integer :: NTRA !>It will be obtained by using size function.
     integer :: NL
-    private :: T,Q,QS,U,V,P,PH,TRA,ND,NTRA,NL
 !>
 !>*****************************************************************************************************
 !>
@@ -107,7 +107,6 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 !>                                 does not cause the scheme to terminate.
 
     integer :: IFLAG
-    private IFLAG
 
 !>
 !>************************************************************************************************************
@@ -126,7 +125,6 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 !>    FV:   Same as FU, but for forcing of meridional velocity.
 
     real,allocatable, dimension(:) ::  FT,FQ,FU,FV !>Dimension ND
-    private :: FT,FQ,FU,FV
 !>
 !>************************************************************************************************************
 !>
@@ -177,13 +175,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
     real,allocatable,dimension(:) :: TRATM,TRAE
 
     !>
-    integer :: i,j,k,l
 
-    private :: NA,FTRA,PRECIP,WD,TPRIME,QPRIME,CBMF
-    private :: DELT,DELTI,RDCP,UENT,VENT,MENT,QENT,ELIJ,SIJ
-    private :: TRAP,TRAENT,NENT,UP,VP,M,MP,TVP,TV,WATER,QP,EP,TH,WT,EVAP,CLW
-    private :: SIGP,TP,TOLD,CPN,LV,LVCP,H,HP,GZ,HM, TRATM,TRAE
-    private :: i,j,k,l
 
 !>
 !>************************************************************************************************************************************************
@@ -205,7 +197,6 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 !>   ***                      the surface layer)                      ***
 
     integer, parameter :: IPBL=0,MINORIG=1
-    private :: IPBL,MINORIG
 !>
 !>*********************************************************************************************************************************************
 !>
@@ -244,9 +235,6 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
     real, parameter :: ELCRIT=0.0011,TLCRIT=-55.0,ENTP=1.5,SIGD=0.05,SIGS=0.12, &
                                OMTRAIN=50.0,OMTSNOW=5.5,COEFFR=1.0,COEFFS=0.8,CU=0.7,   &
                                BETA=10.0,DTMAX=0.9,ALPHA=0.2,DAMP=0.1
-    private :: ELCRIT,TLCRIT,ENTP,SIGD,SIGS, &
-                               OMTRAIN,OMTSNOW,COEFFR,COEFFS,CU,   &
-                               BETA,DTMAX,ALPHA,DAMP
 
 
 !>
@@ -264,12 +252,9 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
     real, parameter :: CPVMCL=CL-CPV, EPS=RD/RV, EPSI=1.0/EPS, GINV=1.0/G
  
     logical :: T1_EntryMatriz !> This Variable is used by copem_set_matriz_at1, if the input parameters are O.K. the code continue and this varyable is set as .TRUE. 
+    
+    public copes_convection,copes_TLIFT
 
-    private :: CPD,CPV,CL,RV,RD,LV0,&
-               G,ROWL,CPVMCL, EPS, EPSI, GINV
-
-    private T1_EntryMatriz
-    private copes_AdiabaticAdjustment,copes_set_matriz_at1,copes_free_matriz,copes_Geo_Heat_SEnergy
 
 
 !>
@@ -298,6 +283,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 
             integer :: IHMIN,NK
             real :: AHMIN, AHMAX
+            integer :: i,j,k,l
            
 
             call copes_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1) !> The first automatic test of this parametrization, difine if  T1_EntryMatriz will be .TRUE. or .FALSE.
@@ -352,6 +338,8 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
             implicit none
             real :: AHMIN,TVX,TVY
             integer :: NL,IHMIN
+            integer :: i,j,k,l
+
             GZ(1)=0.0
             CPN(1)=CPD*(1.-Q(1))+Q(1)*CPV
             H(1)=T(1)*CPN(1)
@@ -393,6 +381,8 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
         subroutine copes_Level(NL,IHMIN,AHMAX,NK)
             integer :: IHMIN,NK,ICB,NL
             real :: AHMAX,RH,CHI,PLCL
+            integer :: i,j,k,l
+
 !
 !>  ***     Find that model level below the level of minimum moist       ***
 !>  ***  static energy that has the maximum value of moist static energy ***
@@ -451,6 +441,8 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 
         subroutine copes_TInstability(NL,NK)
             integer :: NL,NK,ICB
+            integer :: i,j,k,l
+
 !
 !   *** SUBROUTINE TLIFT CALCULATES PART OF THE LIFTED PARCEL VIRTUAL      ***
 !   ***  TEMPERATURE, THE ACTUAL TEMPERATURE AND THE ADIABATIC             ***
@@ -497,6 +489,8 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
             implicit none
             logical :: lcomp
             integer :: JC,JN,ierr
+            integer :: i,j,k,l
+
             real :: soma,THBAR,AHM,RM,UM,VM,DPHINV,A2,x,RDCP,TNEW,ALV,ALVNEW, &
                             QNEW,TC
 !>            real, dimension(NA) :: TH,TRATM,TOLD
@@ -553,7 +547,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                                !>DO K=1,NTRA
                                !>   TRATM(K)=TRATM(K)*DPHINV
                                !>END DO
-                               TRATM =TRATM*DPHINV !>Media de TRA no nível J
+                               TRATM(1:NTRA) = TRATM(1:NTRA)*DPHINV !>Media de TRA no nível J
  
                                A2=0.0
  
@@ -735,6 +729,8 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 
         SUBROUTINE copes_TLIFT(ICB,NK,TVP,TPK,CLW,NL,KK)
             integer :: NL, KK,NK,NST,NSB,ICB
+            integer :: i,j,k,l
+
 
             real :: CPINV, CPP,TG,QG,ALV,S,TC,DENOM,ES,AH0,AHG,RG
             real, dimension(ND) :: CLW,TPK,TVP 
