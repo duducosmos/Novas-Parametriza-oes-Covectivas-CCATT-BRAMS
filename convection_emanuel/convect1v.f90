@@ -474,6 +474,33 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                 SIGP(I)=SIGS
             end do do_fifty_seven
 
+            do_sixty: DO I=NK+1,NL
+                TCA=TP(I)-273.15
+                IF(TCA.GE.0.0)THEN
+                 ELACRIT=ELCRIT
+                ELSE
+                 ELACRIT=ELCRIT*(1.0-TCA/TLCRIT)
+                END IF
+                ELACRIT=MAX(ELACRIT,0.0)
+	          EPMAX=0.999
+                EP(I)=EPMAX*(1.0-ELACRIT/MAX(CLW(I),1.0E-8))
+                EP(I)=MAX(EP(I),0.0)
+                EP(I)=MIN(EP(I),EPMAX)
+                SIGP(I)=SIGS
+            end do do_sixty
+
+!
+!>   ***       CALCULATE VIRTUAL TEMPERATURE AND LIFTED PARCEL     ***
+!>  ***                    VIRTUAL TEMPERATURE                    ***
+!
+            !do_sity_four: DO  
+            I=ICB+1,NL 
+            TVP(I:NL)=TVP(I:NL)-TP(I:NL)*Q(NK)! Equivale ao do 64 de convect43c.f
+            !end do do_sity_four
+
+            TVP(NL+1)=TVP(NL)-(GZ(NL+1)-GZ(NL))/CPD
+
+
         end subroutine copes_TInstability
 
 

@@ -449,7 +449,7 @@ C
          SIGP(I)=SIGS
    57   CONTINUE
 
-C OK
+C 
         DO 60 I=NK+1,NL
          TCA=TP(I)-273.15
          IF(TCA.GE.0.0)THEN
@@ -464,6 +464,7 @@ C OK
          EP(I)=MIN(EP(I),EPMAX)
          SIGP(I)=SIGS
    60   CONTINUE
+C O.K
 C
 C   ***       CALCULATE VIRTUAL TEMPERATURE AND LIFTED PARCEL     ***
 C   ***                    VIRTUAL TEMPERATURE                    ***
