@@ -442,6 +442,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
         subroutine copes_TInstability(NL,NK)
             integer :: NL,NK,ICB
             integer :: i,j,k,l
+            real :: ELACRIT,EPMAX,TCA
 
 !
 !   *** SUBROUTINE TLIFT CALCULATES PART OF THE LIFTED PARCEL VIRTUAL      ***
@@ -482,7 +483,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                  ELACRIT=ELCRIT*(1.0-TCA/TLCRIT)
                 END IF
                 ELACRIT=MAX(ELACRIT,0.0)
-	          EPMAX=0.999
+	            EPMAX=0.999
                 EP(I)=EPMAX*(1.0-ELACRIT/MAX(CLW(I),1.0E-8))
                 EP(I)=MAX(EP(I),0.0)
                 EP(I)=MIN(EP(I),EPMAX)
@@ -494,7 +495,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 !>  ***                    VIRTUAL TEMPERATURE                    ***
 !
             !do_sity_four: DO  
-            I=ICB+1,NL 
+            I=ICB+1!,NL 
             TVP(I:NL)=TVP(I:NL)-TP(I:NL)*Q(NK)! Equivale ao do 64 de convect43c.f
             !end do do_sity_four
 

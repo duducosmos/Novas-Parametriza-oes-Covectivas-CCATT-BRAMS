@@ -464,7 +464,7 @@ C
          EP(I)=MIN(EP(I),EPMAX)
          SIGP(I)=SIGS
    60   CONTINUE
-C O.K
+C O.K****************************************************************************************
 C
 C   ***       CALCULATE VIRTUAL TEMPERATURE AND LIFTED PARCEL     ***
 C   ***                    VIRTUAL TEMPERATURE                    ***
