@@ -287,60 +287,57 @@
                     FRAC=-CAPE/DEFRAC
                     FRAC=MIN(FRAC,1.0)
                     FRAC=MAX(FRAC,0.0)
-C
-C   ***   CALCULATE LIQUID WATER STATIC ENERGY OF LIFTED PARCEL   ***
-C
-        DO 95 I=ICB,INB
-         HP(I)=H(NK)+(LV(I)+(CPD-CPV)*T(I))*EP(I)*CLW(I)
-   95   CONTINUE                  
-C
-C   ***  CALCULATE CLOUD BASE MASS FLUX AND RATES OF MIXING, M(I),  ***
-c   ***                   AT EACH MODEL LEVEL                       ***
-C
-        DBOSUM=0.0
-C   
-C   ***     INTERPOLATE DIFFERENCE BETWEEN LIFTED PARCEL AND      ***
-C   ***  ENVIRONMENTAL TEMPERATURES TO LIFTED CONDENSATION LEVEL  ***
-C	
-        TVPPLCL=TVP(ICB-1)-RD*TVP(ICB-1)*(P(ICB-1)-PLCL)/
-     1    (CPN(ICB-1)*P(ICB-1))
-        TVAPLCL=TV(ICB)+(TVP(ICB)-TVP(ICB+1))*(PLCL-P(ICB))/
-     1    (P(ICB)-P(ICB+1))
-        DTPBL=0.0
-        DO 96 I=NK,ICB-1
-         DTPBL=DTPBL+(TVP(I)-TV(I))*(PH(I)-PH(I+1))
-   96   CONTINUE
-        DTPBL=DTPBL/(PH(NK)-PH(ICB))
-        DTMIN=TVPPLCL-TVAPLCL+DTMAX+DTPBL
-        DTMA=DTMIN
-C
-C   ***  ADJUST CLOUD BASE MASS FLUX   ***
-C
-      CBMFOLD=CBMF
-	DELT0=300.0
-      DAMPS=DAMP*DELT/DELT0 
-      CBMF=(1.-DAMPS)*CBMF+0.1*ALPHA*DTMA 
-      CBMF=MAX(CBMF,0.0)
-C
-C   *** If cloud base mass flux is zero, skip rest of calculation  ***
-C
-      IF(CBMF.EQ.0.0.AND.CBMFOLD.EQ.0.0)THEN
-       RETURN
-      END IF
-C
-C   ***   CALCULATE RATES OF MIXING,  M(I)   ***
-C
-      M(ICB)=0.0
-      DO 103 I=ICB+1,INB
-       K=MIN(I,INB1)
-       DBO=ABS(TV(K)-TVP(K))+
-     1  ENTP*0.02*(PH(K)-PH(K+1))
-       DBOSUM=DBOSUM+DBO
-       M(I)=CBMF*DBO
-  103 CONTINUE
-      DO 110 I=ICB+1,INB
-       M(I)=M(I)/DBOSUM  
-  110 CONTINUE     
+!
+!   ***   CALCULATE LIQUID WATER STATIC ENERGY OF LIFTED PARCEL   ***
+!
+                    do_ninety_five: DO 95 I=ICB,INB
+                        HP(I)=H(NK)+(LV(I)+(CPD-CPV)*T(I))*EP(I)*CLW(I)
+                    end do do_ninety_five                  
+!
+!   ***  CALCULATE CLOUD BASE MASS FLUX AND RATES OF MIXING, M(I),  ***
+!   ***                   AT EACH MODEL LEVEL                       ***
+!
+                    DBOSUM=0.0
+!   
+!   ***     INTERPOLATE DIFFERENCE BETWEEN LIFTED PARCEL AND      ***
+!   ***  ENVIRONMENTAL TEMPERATURES TO LIFTED CONDENSATION LEVEL  ***
+!	
+                    TVPPLCL=TVP(ICB-1)-RD*TVP(ICB-1)*(P(ICB-1)-PLCL)/(CPN(ICB-1)*P(ICB-1))
+                    TVAPLCL=TV(ICB)+(TVP(ICB)-TVP(ICB+1))*(PLCL-P(ICB))/(P(ICB)-P(ICB+1))
+                    DTPBL=0.0
+                    DO 96 I=NK,ICB-1
+                        DTPBL=DTPBL+(TVP(I)-TV(I))*(PH(I)-PH(I+1))
+                    96   CONTINUE
+                    DTPBL=DTPBL/(PH(NK)-PH(ICB))
+                    DTMIN=TVPPLCL-TVAPLCL+DTMAX+DTPBL
+                    DTMA=DTMIN
+!
+!   ***  ADJUST CLOUD BASE MASS FLUX   ***
+!
+                    CBMFOLD=CBMF
+                	DELT0=300.0
+                    DAMPS=DAMP*DELT/DELT0 
+                    CBMF=(1.-DAMPS)*CBMF+0.1*ALPHA*DTMA 
+                    CBMF=MAX(CBMF,0.0)
+!
+!   *** If cloud base mass flux is zero, skip rest of calculation  ***
+!
+                    IF(CBMF.EQ.0.0.AND.CBMFOLD.EQ.0.0)THEN
+                        RETURN
+                    END IF
+!
+!   ***   CALCULATE RATES OF MIXING,  M(I)   ***
+!
+                    M(ICB)=0.0
+                    do_a_hundred_three: DO I=ICB+1,INB
+                        K=MIN(I,INB1)
+                        DBO=ABS(TV(K)-TVP(K))+ENTP*0.02*(PH(K)-PH(K+1))
+                        DBOSUM=DBOSUM+DBO
+                        M(I)=CBMF*DBO
+                    enddo do_a_hundred_three
+                    do_a_hundred_ten:DO 110 I=ICB+1,INB
+                        M(I)=M(I)/DBOSUM  
+                    enddo do_a_hundred_ten     
 C
 C   ***  CALCULATE ENTRAINED AIR MASS FLUX (MENT), TOTAL WATER MIXING  ***
 C   ***     RATIO (QENT), TOTAL CONDENSED WATER (ELIJ), AND MIXING     ***
