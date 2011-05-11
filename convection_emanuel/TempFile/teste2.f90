@@ -30,8 +30,15 @@ module t5
         subroutine Oi2(x)
             real x
             print*,'Oi2'
-            call Oi(x)
+            call Oi3(x)
+            
         end subroutine Oi2
+        
+        subroutine Oi3(x)
+            real x
+            print*,'oi3'
+            call Oi(x)
+        end subroutine Oi3
     
 end module t5
 
