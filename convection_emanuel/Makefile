@@ -12,11 +12,9 @@
 FORTRAN_COMPILER = gfortran
 
 all: src/convect1.f90
-#	$(FORTRAN_COMPILER) -O2 -g \
+	$(FORTRAN_COMPILER) -O2 -g \
 		-o bin/Convec \
 		src/Convec.f90
-	$(FORTRAN_COMPILER) -c bin/ \
-		src/convect1.f90
 
 clean:
 	rm -f bin/Convec *.mod
