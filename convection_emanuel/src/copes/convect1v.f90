@@ -36,9 +36,9 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
     contains
 
 !
-!*********************************************************************************************************************************************************************************
-!*********************************************************************************************************************************************************************************
-!*********************************************************************************************************************************************************************************
+!**************************************************************************************************
+!**************************************************************************************************
+!**************************************************************************************************
 !
 
         subroutine copes_convection(T1,   Q1,    QS1,     U1,    V1,      TRA1,    P1,    PH1,&
@@ -58,8 +58,11 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
             real :: AHMIN, AHMAX
             integer :: i,j,k,l
            
-
-            call copes_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1) !> The first automatic test of this parametrization, difine if  T1_EntryMatriz will be .TRUE. or .FALSE.
+            !> The first automatic test of this
+            !> parametrization, difine if  
+            !> T1_EntryMatriz will be .TRUE. 
+            !> or .FALSE.
+            call copes_set_matriz_at1(T1,Q1,QS1,U1,V1,TRA1,P1,PH1)  
 
 
             if( T1_EntryMatriz .eqv. .TRUE.) then
@@ -79,11 +82,13 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
                 if(IPBL /= 0 ) then
                    call copes_AdiabaticAdjustment()
                 endif
+                
+                !CALCULATE ARRAYS OF GEOPOTENTIAL, HEAT CAPACITY AND STATIC ENERGY
+                call copes_Geo_Heat_SEnergy() 
 
-                call copes_Geo_Heat_SEnergy() !CALCULATE ARRAYS OF GEOPOTENTIAL, HEAT CAPACITY AND STATIC ENERGY
 
-!cd ..
-                call copes_Level() !Find that model level below the level of minimum moist !
+                !Find that model level below the level of minimum moist !
+                call copes_Level() 
 
 !>
 !>
