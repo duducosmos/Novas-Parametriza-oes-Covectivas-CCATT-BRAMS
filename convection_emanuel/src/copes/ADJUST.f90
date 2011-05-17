@@ -1,3 +1,22 @@
+!> Convective parametrization based in K. A. Emanuel (1991,1999) scheme
+!>   Copyright (C) 2011  Grupo de Modelagem da Atmosfera e Interfaces (GMAI)
+!>                http://meioambiente.cptec.inpe.br/gmai/index.php
+!>
+!> @Author Eduardo S. Pereira
+!>
+!>    This program is free software: you can redistribute it and/or modify
+!>    it under the terms of the GNU General Public License as published by
+!>    the Free Software Foundation, either version 3 of the License, or
+!>    (at your option) any later version.
+!>
+!>    This program is distributed in the hope that it will be useful,
+!>    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!>    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!>    GNU General Public License for more details.
+!>
+!>    You should have received a copy of the GNU General Public License
+!>    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 module ADJUST
 
     use VarDeclared
@@ -6,6 +25,7 @@ module ADJUST
     contains
     
         subroutine copes_virtual_temp()
+            integer :: i
 
 
             !   ***       CALCULATE VIRTUAL TEMPERATURE AND LIFTED PARCEL     ***
@@ -13,7 +33,7 @@ module ADJUST
             !
             do_sixty_four: DO I=ICB+1,NL
                  TVP(I)=TVP(I)-TP(I)*Q(NK)
-            end do_sixty_four
+            end do do_sixty_four
             
             TVP(NL+1)=TVP(NL)-(GZ(NL+1)-GZ(NL))/CPD
                 !

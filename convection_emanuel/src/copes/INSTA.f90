@@ -1,5 +1,8 @@
 !> Convective parametrization based in K. A. Emanuel (1991,1999) scheme
-!>   Copyright (C) 2011  Eduardo S. Pereira
+!>   Copyright (C) 2011  Grupo de Modelagem da Atmosfera e Interfaces (GMAI)
+!>                http://meioambiente.cptec.inpe.br/gmai/index.php
+!>
+!> @Author Eduardo S. Pereira
 !>
 !>    This program is free software: you can redistribute it and/or modify
 !>    it under the terms of the GNU General Public License as published by
