@@ -1,5 +1,8 @@
 module ADJUST
 
+    use VarDeclared
+    implicit none
+
     contains
     
         subroutine copes_virtual_temp()

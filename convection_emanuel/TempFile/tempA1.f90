@@ -1,4 +1,8 @@
+module AMFLUX
 
+
+
+    contains
 !
 !   ***  CALCULATE ENTRAINED AIR MASS FLUX (MENT), TOTAL WATER MIXING  ***
 !   ***     RATIO (QENT), TOTAL CONDENSED WATER (ELIJ), AND MIXING     ***
@@ -75,3 +79,5 @@
          end do do_a_hundred_seventy
          
          SIJ(INB,INB)=1.0
+         
+end module AMFLUX
