@@ -28,15 +28,7 @@ module ADJUST
             integer :: i
 
 
-            !   ***       CALCULATE VIRTUAL TEMPERATURE AND LIFTED PARCEL     ***
-            !   ***                    VIRTUAL TEMPERATURE                    ***
             !
-            do_sixty_four: DO I=ICB+1,NL
-                 TVP(I)=TVP(I)-TP(I)*Q(NK)
-            end do do_sixty_four
-            
-            TVP(NL+1)=TVP(NL)-(GZ(NL+1)-GZ(NL))/CPD
-                !
             !   ***        NOW INITIALIZE VARIOUS ARRAYS USED IN THE COMPUTATIONS       ***
             !
             !DO 70 I=1,NL+1
