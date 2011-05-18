@@ -100,6 +100,22 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
 
                 !Find that model level below the level of minimum moist !
                 call copes_Level() 
+                
+                call copes_TInstability()
+                
+                call copes_virtual_temp()
+                
+                call copes_flux()
+                
+                call copes_normentr_pmix()
+                
+                call copes_precip()
+                
+                call copes_tendenci()
+                
+                call copes_tendenci2()
+                
+                call copes_adjust_tend()
 
 !>
 !>

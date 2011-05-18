@@ -27,15 +27,12 @@
 module GEO
     use VarDeclared
     implicit none
-    real :: AHMIN
-    integer :: IHMIN
     
     contains
 
        subroutine copes_Geo_Heat_SEnergy
             implicit none
-            real :: AHMIN,TVX,TVY
-            integer :: NL,IHMIN
+            real :: TVX,TVY
             integer :: i,j,k,l
 
             GZ(1)=0.0

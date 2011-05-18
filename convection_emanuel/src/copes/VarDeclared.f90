@@ -267,7 +267,7 @@ module VarDeclared
     real :: FRAC !Verificar essa variavel
     
     integer :: IHMIN
-    real :: AHMAX
+    real :: AHMAX,AHMIN
 
 
 end module VarDeclared
