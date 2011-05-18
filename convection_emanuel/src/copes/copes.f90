@@ -28,7 +28,7 @@ module copes !>Convective parametrization based in K. A. Emanuel (1991,1999) sch
     use GEO
     use LEVEL
     use ADI
-    use ADJUSTTENDECI
+    use ADJUSTTENDENCI
     USE ADJUST
     USE PRECIDOWN
     USE TENDENCI

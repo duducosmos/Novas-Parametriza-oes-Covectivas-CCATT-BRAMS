@@ -26,7 +26,10 @@ module NENTRE
         !   ***              PROBABILITIES OF MIXING                     ***
         !
         subroutine copes_normentr_pmix()
-        
+            integer :: I,J
+            real :: QP1,ANUM,DENOM,SCRIT,ALT
+            real :: ASIJ,SMIN,SMID,SJMAX,SJMIN,DELP,DELM,BSUM
+            
             do_tow_hundred: DO I=ICB+1,INB
             
                 if_tow_hundred: IF(NENT(I).NE.0)THEN

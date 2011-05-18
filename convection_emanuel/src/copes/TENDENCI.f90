@@ -24,6 +24,8 @@ module TENDENCI
     contains
         
         subroutine copes_tendenci()
+            integer :: I,J,K
+            real :: DPINV,AM,AMDE
 
             !
             !   ***  CALCULATE DOWNDRAFT VELOCITY SCALE AND SURFACE TEMPERATURE AND  ***
@@ -63,7 +65,7 @@ module TENDENCI
             
             AMDE=0.0
             
-            do_four_hundred_fifiteen: DO 415 J=2,INB
+            do_four_hundred_fifiteen: DO  J=2,INB
             
                 FQ(1)=FQ(1)+G*DPINV*MENT(J,1)*(QENT(J,1)-Q(1))
                 FU(1)=FU(1)+G*DPINV*MENT(J,1)*(UENT(J,1)-U(1))

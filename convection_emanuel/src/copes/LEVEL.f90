@@ -28,15 +28,14 @@ module LEVEL
 
     use VarDeclared
     implicit none
-    integer :: IHMIN,NK
-    real :: AHMAX
+    
 
     contains 
 
         subroutine copes_Level
             implicit none
-            integer :: IHMIN,NK,ICB,NL
-            real :: AHMAX,RH,CHI,PLCL
+
+            real :: RH,CHI
             integer :: i,j,k,l
 
 !

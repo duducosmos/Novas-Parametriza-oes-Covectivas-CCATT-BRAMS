@@ -24,6 +24,10 @@ module PRECIDOWN
     contains
     
         subroutine copes_precip()
+            integer :: I,J,K
+            integer :: JTT
+            real :: WDTRAIN,AWAT,COEFF,QSM,AFAC,SIGT,B6,C6,REVAP,DHDP,FAC,QSTM
+            real :: RAT
             !
             !   ***  CHECK WHETHER EP(INB)=0, IF SO, SKIP PRECIPITATING    ***
             !   ***             DOWNDRAFT CALCULATION                      ***
@@ -50,7 +54,7 @@ module PRECIDOWN
                     
                     IF(I.GT.1)THEN
                 
-                        do_three_hundred_twenty:DO 320 J=1,I-1
+                        do_three_hundred_twenty:DO  J=1,I-1
                             AWAT=ELIJ(J,I)-(1.-EP(I))*CLW(I)
                             AWAT=MAX(0.0,AWAT)
                             WDTRAIN=WDTRAIN+G*AWAT*MENT(J,I)

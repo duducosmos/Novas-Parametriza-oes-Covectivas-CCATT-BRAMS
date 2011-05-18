@@ -262,6 +262,12 @@ module VarDeclared
     real :: CAPE
     
     integer :: NK
+    
+    real :: TVAPLCL,PLCL !Verificar essas variáveis:
+    real :: FRAC !Verificar essa variavel
+    
+    integer :: IHMIN
+    real :: AHMAX
 
 
 end module VarDeclared

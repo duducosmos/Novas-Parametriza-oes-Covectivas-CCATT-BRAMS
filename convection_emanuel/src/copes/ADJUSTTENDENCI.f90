@@ -20,13 +20,15 @@
 module ADJUSTTENDENCI
     use VarDeclared
     implicit none
-    real :: FRAC
+    
     
     contains
     
         subroutine copes_adjust_tend()
             real :: FQOLD,FTOLD,FVOLD,FUOLD,FTRAOLD,TRAAV,ENTS,UAV,VAV
             integer :: i,k
+            
+            
 
             !   *** Adjust tendencies at top of convection layer to reflect  ***
             !   ***       actual position of the level zero CAPE             ***

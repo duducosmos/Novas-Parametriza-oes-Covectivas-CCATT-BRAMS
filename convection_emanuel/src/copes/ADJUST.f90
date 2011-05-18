@@ -32,7 +32,7 @@ module ADJUST
             real :: CAPEM,BYP,DEFRAC,FRAC,DBOSUM,DBO
             real :: TVPPLCL,DTPBL,DTMIN,DTMA,CBMFOLD
             real :: DAMPS,DELT0,BY
-            real :: ALPHA,DAMP,TVAPLCL,DTMAX,PLCL
+            
             
             
 

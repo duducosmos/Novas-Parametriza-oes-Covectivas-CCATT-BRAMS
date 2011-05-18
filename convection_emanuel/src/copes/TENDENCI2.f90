@@ -30,6 +30,8 @@ module TENDENCI2
         !   ***                      THROUGH EACH LEVEL                          ***
         
         subroutine copes_tendenci2()
+            integer :: I,J,K
+            real :: DPINV,CPINV,AMP1,AD,AWAT
 
             do_five_hundred: DO I=2,INB
             
@@ -46,7 +48,7 @@ module TENDENCI2
                     
                 END IF
                 
-                do_four_hundred_fifty: DO 450 K=1,I
+                do_four_hundred_fifty: DO  K=1,I
                 
                     DO J=I+1,INB+1
                         AMP1=AMP1+MENT(K,J)
@@ -57,13 +59,13 @@ module TENDENCI2
                 
                 IF((2.*G*DPINV*AMP1).GE.DELTI)IFLAG=4
                 
-                DO 470 K=1,I-1
+                DO  K=1,I-1
                 
                     DO J=I,INB
                         AD=AD+MENT(J,K)
                     ENDDO 
                     
-                ENDDO do_four_hundred_seventy
+                ENDDO 
                     
                 FT(I)=FT(I)+G*DPINV*(AMP1*(T(I+1)-T(I)+(GZ(I+1)-GZ(I))* &
                         CPINV)-AD*(T(I)-T(I-1)+(GZ(I)-GZ(I-1))*CPINV))  &
@@ -119,7 +121,7 @@ module TENDENCI2
                 END DO do_four_hundred_ninety
                     
                 FQ(I)=FQ(I)+SIGD*EVAP(I)+G*(MP(I+1)* &
-                          QP(I+1)-Q(I))-MP(I)*(QP(I)-Q(I-1)))*DPINV
+                          (QP(I+1)-Q(I))-MP(I)*(QP(I)-Q(I-1)))*DPINV
                           
                 FU(I)=FU(I)+G*(MP(I+1)*(UP(I+1)-U(I))-MP(I)* &
                         (UP(I)-U(I-1)))*DPINV

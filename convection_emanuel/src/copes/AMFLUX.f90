@@ -25,6 +25,8 @@ module AMFLUX
     contains
     
     subroutine copes_flux()
+        integer :: I,J
+        real :: QTI,BF2,ANUM,DENOM,DEI,ALTEM,CWAT,STEMP
         !
         !   ***  CALCULATE ENTRAINED AIR MASS FLUX (MENT), TOTAL WATER MIXING  ***
         !   ***     RATIO (QENT), TOTAL CONDENSED WATER (ELIJ), AND MIXING     ***
