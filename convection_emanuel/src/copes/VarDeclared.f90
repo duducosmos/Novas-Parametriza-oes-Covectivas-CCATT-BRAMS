@@ -253,6 +253,15 @@ module VarDeclared
     real, parameter :: CPD=1005.7,CPV=1870.0,CL=2500.0,RV=461.5,RD=287.04,LV0=2.501E6,&
                                G=9.8,ROWL=1000.0 
     real, parameter :: CPVMCL=CL-CPV, EPS=RD/RV, EPSI=1.0/EPS, GINV=1.0/G
+    
+    
+!>********************************************************************************************
+
+    integer :: INB !> level of neutral buoyance
+    integer :: ICB !> level of cloud base
+    real :: CAPE
+    
+    integer :: NK
 
 
 end module VarDeclared

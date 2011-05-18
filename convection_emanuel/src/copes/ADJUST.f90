@@ -21,25 +21,44 @@ module ADJUST
 
     use VarDeclared
     implicit none
+    
+    
 
     contains
     
         subroutine copes_virtual_temp()
-            integer :: i
+        
+            integer :: i,k,INB1
+            real :: CAPEM,BYP,DEFRAC,FRAC,DBOSUM,DBO
+            real :: TVPPLCL,DTPBL,DTMIN,DTMA,CBMFOLD
+            real :: DAMPS,DELT0,BY
+            real :: ALPHA,DAMP,TVAPLCL,DTMAX,PLCL
+            
+            
 
 
             !
             !   ***        NOW INITIALIZE VARIOUS ARRAYS USED IN THE COMPUTATIONS       ***
             !
             !DO 70 I=1,NL+1
-            HP(1:NL+1)=H(1:NL+1);         NENT(1:NL+1)=0;          WATER(1:NL+1)=0.0;         EVAP(1:NL+1)=0.0
-            WT(1:NL+1)=OMTSNOW;         MP(1:NL+1)=0.0;         M(1:NL+1)=0.0;         LVCP(1:NL+1)=LV(1:NL+1)/CPN(1:NL+1)
-             !DO 70 J=1,NL+1
-            QENT(1:NL+1,1:NL+1)=Q(1:NL+1);         ELIJ(1:NL+1,1:NL+1)=0.0;         MENT(1:NL+1,1:NL+1)=0.0
-            SIJ(1:NL+1,1:NL+1)=0.0;         UENT(1:NL+1,1:NL+1)=U(1:NL+1);         VENT(1:NL+1,1:NL+1)=V(1:NL+1)
+            HP(1:NL+1)=H(1:NL+1)
+            NENT(1:NL+1)=0
+            WATER(1:NL+1)=0.0
+            EVAP(1:NL+1)=0.0
+            WT(1:NL+1)=OMTSNOW
+            MP(1:NL+1)=0.0
+            M(1:NL+1)=0.0
+            LVCP(1:NL+1)=LV(1:NL+1)/CPN(1:NL+1)
+            do_seventy: DO I=1,NL+1
+                QENT(I,1:NL+1)=Q(1:NL+1)
+                ELIJ(I,1:NL+1)=0.0
+                MENT(I,1:NL+1)=0.0
+                SIJ(I,1:NL+1)=0.0
+                UENT(I,1:NL+1)=U(1:NL+1)
+                VENT(I,1:NL+1)=V(1:NL+1)
              !DO 70 K=1,NTRA
-            TRAENT(1:NL+1,1:NL+1,1:NTRA)=TRA(1:NL+1,NTRA)
-       !70   CONTINUE
+                TRAENT(I,1:NL+1,1:NTRA)=TRA(1:NL+1,1:NTRA)
+            end do do_seventy
        
        
        
